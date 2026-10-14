@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>محاكي القرارات الإدارية</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@500;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap">
+<style>
+/* Layout: an official exam booklet — a sticky header bar with the clock, one narrow column of questions, sections as paper sheets. */
+:root{
+  --bg:#f3f5f1; --paper:#ffffff; --ink:#18221d; --muted:#5a665f; --line:#d6ddd6;
+  --accent:#17654a; --accent-soft:#e3efe8; --gold:#9a6a1c; --gold-soft:#f6ecd9;
+  --ok:#1e7a45; --ok-soft:#e2f2e7; --bad:#b23a2b; --bad-soft:#f8e3df;
+  --display:"Reem Kufi","IBM Plex Sans Arabic",Tahoma,sans-serif;
+  --body:"IBM Plex Sans Arabic","Segoe UI",Tahoma,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111613; --paper:#19201c; --ink:#e5ebe7; --muted:#9aa79f; --line:#2c3630;
+  --accent:#5ec095; --accent-soft:#1d3229; --gold:#d9a85a; --gold-soft:#33291a;
+  --ok:#62c68c; --ok-soft:#173022; --bad:#ef8a7c; --bad-soft:#3a1d19; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111613; --paper:#19201c; --ink:#e5ebe7; --muted:#9aa79f; --line:#2c3630;
+  --accent:#5ec095; --accent-soft:#1d3229; --gold:#d9a85a; --gold-soft:#33291a;
+  --ok:#62c68c; --ok-soft:#173022; --bad:#ef8a7c; --bad-soft:#3a1d19; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.75;direction:rtl}
+.wrap{max-width:820px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 80px;display:flex;flex-direction:column;gap:20px}
+header.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}
+header.bar .in{max-width:820px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.brand{font-family:var(--display);font-weight:700;font-size:18px;color:var(--accent);flex:1;min-width:0}
+.clock{font-variant-numeric:tabular-nums;font-weight:600;padding:4px 12px;border:1px solid var(--line);border-radius:999px}
+.clock.low{color:var(--bad);border-color:var(--bad)}
+.prog{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.4}
+h1{font-size:28px}
+h2{font-size:21px}
+.sheet{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:22px;display:flex;flex-direction:column;gap:16px}
+.lead{color:var(--muted);margin:0}
+.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.meta div{border-top:2px solid var(--accent);padding-top:8px}
+.meta b{display:block;font-size:22px;font-variant-numeric:tabular-nums}
+.meta span{font-size:13px;color:var(--muted)}
+.opts{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.lbl{font-size:13px;color:var(--muted);letter-spacing:.02em}
+.chip{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:6px 14px;font:inherit;font-size:14px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--paper)}
+.btn{font:inherit;font-weight:600;border-radius:6px;padding:10px 20px;cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:var(--paper)}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn:focus-visible,.chip:focus-visible,.choice:focus-within,textarea:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--line)}
+.tab{font:inherit;font-family:var(--display);font-size:16px;background:none;border:none;border-bottom:3px solid transparent;padding:10px 16px;color:var(--muted);cursor:pointer}
+.tab[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+.q{border-top:1px solid var(--line);padding-top:18px;display:flex;flex-direction:column;gap:10px}
+.q:first-of-type{border-top:none;padding-top:0}
+.qh{display:flex;gap:10px;align-items:baseline}
+.qn{font-family:var(--display);color:var(--accent);font-variant-numeric:tabular-nums;min-width:2.2em}
+.qt{flex:1;min-width:0;font-weight:500}
+.tag{font-size:12px;padding:1px 8px;border-radius:4px;background:var(--gold-soft);color:var(--gold);white-space:nowrap}
+.tag.new{background:var(--accent-soft);color:var(--accent)}
+.marks{font-size:13px;color:var(--muted);white-space:nowrap}
+.choices{display:flex;flex-direction:column;gap:6px;padding-inline-start:2.6em}
+.choice{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:6px;padding:8px 12px;cursor:pointer}
+.choice input{margin-top:7px;accent-color:var(--accent)}
+.choice.sel{border-color:var(--accent);background:var(--accent-soft)}
+.choice.right{border-color:var(--ok);background:var(--ok-soft)}
+.choice.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.locked .choice{cursor:default}
+.exp{padding-inline-start:2.6em;font-size:14px;color:var(--muted);margin:0}
+.exp b{color:var(--ink)}
+textarea{width:100%;min-height:150px;font:inherit;line-height:1.8;padding:10px 12px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);resize:vertical}
+.rub{display:flex;flex-direction:column;gap:6px;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:12px}
+.rub label{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
+.rub input{margin-top:7px;accent-color:var(--ok)}
+.yours{white-space:pre-wrap;background:var(--bg);border-inline-start:3px solid var(--line);padding:8px 12px;margin:0;font-size:15px}
+.score{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.score div{border:1px solid var(--line);border-radius:6px;padding:12px}
+.score b{display:block;font-family:var(--display);font-size:26px;font-variant-numeric:tabular-nums}
+.score span{font-size:13px;color:var(--muted)}
+.score .total{border-color:var(--accent);background:var(--accent-soft)}
+.confirm{border:1px solid var(--gold);background:var(--gold-soft);border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.note{font-size:13px;color:var(--muted);margin:0}
+@media (prefers-reduced-motion:no-preference){.choice,.chip,.tab{transition:background .15s,border-color .15s}}
+@media (max-width:520px){.choices,.exp{padding-inline-start:0}.sheet{padding:16px}h1{font-size:23px}}
+</style>
+</head>
+<body>
+<header class="bar"><div class="in">
+  <div class="brand">محاكي القرارات الإدارية</div>
+  <span class="prog" id="prog"></span>
+  <span class="clock" id="clock" hidden></span>
+</div></header>
+
+<main class="wrap" id="app"></main>
+
+<script>
+/* ===== بنك الأسئلة ===== */
+const MCQ=[
+{src:"t",q:"يُعتبر قرار جهة الإدارة بسحب العمل من المتعاقد معها:",o:["عقداً إدارياً","قراراً إدارياً","عقداً خاصاً","قراراً خاصاً"],a:1,e:"هو قرار إداري متصل بالعقد، صدر استناداً إلى بند فيه، فيختص به قاضي العقد لا قاضي الإلغاء."},
+{src:"t",q:"العقد الإداري حين يكون محل دعوى أمام القضاء الإداري:",o:["يقبل الطعن بالإلغاء كالقرار","لا يقبل الإلغاء، وإنما يُطلب فسخه أو التعويض","لا يقبل أي دعوى","يقبل الإلغاء والتعويض معاً"],a:1,e:"العقود الإدارية لا تقبل الطعن بالإلغاء، بخلاف القرارات التي تقبل الإلغاء والتعويض."},
+{src:"t",q:"العقود التي تبرمها جهة الإدارة:",o:["كلها عقود إدارية","كلها عقود خاصة","ليست كلها إدارية، فقد تكون خاصة كعقود العمل","تكون إدارية متى كان محلها مالاً عاماً"],a:2,e:"قد تبرم الإدارة عقوداً خاصة، كعقود العمل الخاضعة لنظام العمل والتأمينات الاجتماعية."},
+{src:"t",q:"تحقق القاضي من مطابقة قرار الإدارة بفسخ العقد أو مصادرة الضمان للنظام هو:",o:["رقابة دستورية","رقابة ملاءمة","رقابة تناسب","رقابة مشروعية"],a:3,e:"دور القاضي مراقبة مشروعية تصرف الإدارة دون الحلول محلها. والفسخ والحجز على الضمان قرارات متصلة بالعقد."},
+{q:"لم يرد في الأنظمة السعودية تعريف للقرار الإداري إلا الإشارة إلى:",o:["القرار اللائحي","القرار السلبي","القرار المنعدم","القرار الضمني"],a:1,e:"أشار نظام ديوان المظالم إلى أنه يُعدّ في حكم القرار الإداري رفض الجهة أو امتناعها عن قرار واجب عليها."},
+{q:"\"يوم القَرّ\" الذي ورد في المعنى اللغوي للقرار هو:",o:["يوم عرفة","يوم النحر","اليوم الذي يلي يوم النحر","آخر أيام التشريق"],a:2,e:"سُمّي بذلك لأن الناس يقَرّون فيه بمنى."},
+{q:"أضافت المحكمة الإدارية العليا إلى التعريف القضائي للقرار الإداري قيدَي:",o:["الإرادة المنفردة وتحقيق المصلحة العامة","النشر والإعلان","الكتابة والتسبيب","النهائية والتحصن"],a:0,e:"عرّفته بأنه إفصاح الإدارة عن إرادتها المنفردة... بقصد تحقيق مصلحة عامة."},
+{q:"امتناع الإدارة عن التعويض عن عملها المادي الضار يُعدّ:",o:["عملاً مادياً لا يُطعن فيه","قراراً إدارياً قابلاً للإلغاء","عقداً إدارياً","عملاً من أعمال السيادة"],a:1,e:"العمل المادي نفسه لا يُلغى، لكن الامتناع عن التعويض عنه قرار إداري قابل للإلغاء."},
+{q:"قرارات الشركة السعودية للكهرباء:",o:["إدارية لأنها تدير مرفقاً عاماً","ليست إدارية لأنها شركة مساهمة تخضع للقانون الخاص","إدارية متى كانت مملوكة للدولة","تقبل الإلغاء أمام ديوان المظالم"],a:1,e:"المملكة تأخذ بالمعيار الشكلي، فقرارات الجهات الخاصة ليست إدارية ولو أدارت مرفقاً عاماً."},
+{q:"قرار غرفة تجارية برفض قيد تاجر في عضويتها:",o:["لا يقبل الطعن لأنها شخص من أشخاص القانون الخاص","يقبل الإلغاء لأنه متصل بنشاطها","من اختصاص المحكمة التجارية","عمل مادي"],a:1,e:"قرارات جمعيات النفع العام وما في حكمها، المتصلة بنشاطها، تقبل الإلغاء (نظام الديوان 1428هـ)."},
+{q:"المراسيم الملكية التي تصدر بها الأنظمة العادية تخضع لـ:",o:["رقابة الإلغاء","رقابة التعويض","رقابة الدفع","رقابة الملاءمة"],a:2,e:"المرسوم ليس قراراً إدارياً، فلا يُلغى ولا يُعوَّض عنه. ويمتنع القاضي عن تطبيقه إذا خالف الشريعة."},
+{q:"في قضية إعلان جبل شدا الأعلى محمية طبيعية، اعتمد القاضي في تكييف قرار مجلس الوزراء:",o:["المعيار الشكلي","المعيار الموضوعي","معيار المرفق العام","معيار الشروط الاستثنائية"],a:1,e:"كيّف القرار بموضوعه فاعتبره تنظيمياً، واعترف بالوظيفة المزدوجة للمجلس."},
+{q:"قرار رئيس المحكمة بنقل أحد موظفي المحكمة هو:",o:["قرار قضائي","حكم قضائي","قرار إداري","عمل من أعمال السيادة"],a:2,e:"هو قرار ذو صبغة إدارية يتعلق بتنظيم مرفق القضاء، بخلاف تعيين الخبير أو تأجيل الجلسة."},
+{q:"الميعاد الغالب للطعن في الأحكام والقرارات القضائية:",o:["30 يوماً من تسلّم نسخة الحكم","60 يوماً من العلم","15 يوماً من النطق","90 يوماً من الصدور"],a:0,e:"أما الطعن في القرارات الإدارية فغالباً خلال 60 يوماً من العلم بها."},
+{q:"قرارات اللجان شبه القضائية بعد نظام ديوان المظالم 1428هـ:",o:["لا تقبل الطعن مطلقاً","الأصل جواز الطعن فيها إلا ما استُثني بنص","لا تقبل الطعن إلا بنص في نظامها","من اختصاص القضاء العام"],a:1,e:"قبل 1428هـ كان الأصل عدم الطعن إلا بنص، وبعده انقلب الأصل."},
+{q:"من أمثلة القرار الضمني بالقبول:",o:["نظام الضمان الاجتماعي","نظام الجمعيات والمؤسسات الأهلية","نظام الخدمة المدنية","نظام المحاماة"],a:1,e:"عدم الرد على طلب إنشاء الجمعية خلال 60 يوماً من استكمال المسوغات يُعدّ موافقة. أما الضمان الاجتماعي فمثال على الرفض الضمني."},
+{q:"من خصائص القرار السلبي:",o:["يتقيد بمدة الطعن","لا يتقيد بمدة الطعن","يصدر في نطاق السلطة التقديرية","مدة السكوت فيه محددة"],a:1,e:"السلبي لا يتقيد بمدة الطعن، ويكون في السلطة المقيدة، ومدة السكوت فيه غير محددة."},
+{q:"امتناع الإدارة عن إصدار قرار يدخل في سلطتها التقديرية:",o:["قرار سلبي","ليس قراراً سلبياً","قرار منعدم","قرار ضمني بالقبول"],a:1,e:"القرار السلبي لا يقوم إلا إذا أوجبت الأنظمة على الإدارة اتخاذ القرار."},
+{q:"قرار الإحالة على التقاعد لبلوغ السن النظامية:",o:["منشئ","كاشف","لائحي","منعدم"],a:1,e:"اعتبره القضاء كاشفاً، فالموظف محال بقوة النظام من يوم بلوغ السن."},
+{q:"من آثار القرار الكاشف:",o:["يقبل الطعن بالإلغاء","يجوز سحبه دون التقيد بميعاد","يخضع لمبدأ عدم الرجعية","يتحصن بمرور 60 يوماً"],a:1,e:"الكاشف لا يقبل الإلغاء، ولا يخضع لعدم الرجعية، ويُسحب دون ميعاد."},
+{q:"مجلس بلدي من 24 عضواً حضر منهم 20. نصاب اتخاذ القرار هو:",o:["10 أعضاء","11 عضواً","12 عضواً","13 عضواً"],a:1,e:"نصاب القرار أغلبية الحاضرين، أي نصف العشرين زائد واحد = 11. أما 13 فهو نصاب الانعقاد."},
+{q:"القرار المشوب بعيب بسيط:",o:["يُلغى تلقائياً","يبقى صحيحاً منتجاً لآثاره حتى يُلغى أو يُسحب","يُعدّ منعدماً","لا يُنتج أي أثر"],a:1,e:"القرار المعيب يتمتع بقرينة الصحة، ولا يُلغى إلا بحكم أو بقرار من الإدارة في المدة."},
+{q:"معيار ديوان المظالم لاعتبار القرار منعدماً:",o:["صدوره شفهياً","إهدار المخالفة ركناً أو أكثر من أركانه","عدم نشره","فوات ميعاد الطعن فيه"],a:1,e:"إذا وصلت المخالفة إلى إهدار ركن، اعتُبر القرار كأن لم يكن، فلا يُصحَّح ولا يتحصن."},
+{q:"دعوى إلغاء قرار تجاوز مدة الطعن فيها:",o:["يحكم القاضي بعدم الاختصاص","يحكم القاضي برفض الدعوى شكلاً","يلغي القاضي القرار","تُحال إلى لجنة شبه قضائية"],a:1,e:"هذا قرار محصّن بفوات المدة. أما المحصّن بنص فيحكم فيه القاضي بعدم الاختصاص."},
+{q:"قرار الحجز على الضمان النهائي للمتعاقد يختص بنظره:",o:["قاضي الإلغاء","قاضي العقد","المحكمة التجارية","اللجان شبه القضائية"],a:1,e:"هو قرار متصل بالعقد. أما القرارات المنفصلة السابقة على الإبرام فيختص بها قاضي الإلغاء."},
+{q:"قواعد الاختصاص:",o:["يجوز الاتفاق على تعديلها","من النظام العام، ويثيرها القاضي من تلقاء نفسه","لا يُدفع بها إلا في أول الدعوى","مقررة لمصلحة الإدارة وحدها"],a:1,e:"لأنها من النظام العام، يجوز التمسك بها في أي مرحلة من مراحل الدعوى."},
+{q:"لا يجوز للمفوَّض إليه أن يفوّض غيره إلا:",o:["بموافقة الوزير المختص","بموافقة مجلس الوزراء","بقرار مكتوب فقط","لا يجوز مطلقاً"],a:0,e:"وفق اللائحة التنفيذية للموارد البشرية."},
+{q:"ينتهي التفويض بمضي مدة من تاريخ تعيين وزير آخر غير من صدر منه التفويض، وهي:",o:["شهر","ثلاثة أشهر","ستة أشهر","سنة"],a:1,e:"وهذا أحد أسباب انتهاء التفويض الخمسة."},
+{q:"قرارات النائب في الإنابة:",o:["لا تأخذ مرتبة الأصيل","تأخذ مرتبة الأصيل","تحتاج إلى مصادقة الأصيل","باطلة"],a:1,e:"بخلاف قرارات المفوَّض إليه، فلا تأخذ مرتبة المفوِّض."},
+{q:"انتقال اختصاصات جهة إلى أخرى بقوة النظام عند قيام مانع لدى الأولى:",o:["التفويض","الحلول","الإنابة","التكليف"],a:1,e:"الحلول كلي، وبنص فقط، ولا اختيار فيه للأصيل ولا للحالّ."},
+{q:"إذا لم تُجرِ الإدارة الفحص الطبي للمعيَّن في الوظيفة:",o:["يبطل قرار التعيين","لا يتمسك الموظف بذلك، لأنه إجراء مقرر لمصلحة الإدارة","يصبح القرار منعدماً","يُوقف تنفيذ القرار"],a:1,e:"الإجراء المقرر لمصلحة الإدارة وحدها من الإجراءات الثانوية التي لا تُبطل القرار."},
+{q:"تسبيب القرار الإداري يندرج ضمن شرط:",o:["السبب","الشكل","المحل","الغاية"],a:1,e:"التسبيب من الشكل، ولا يلزم إلا بنص. أما السبب فشرط مستقل لازم دائماً."},
+{q:"لفظة \"حقاً\" في قول القضاء إن القرار يجب أن يقوم على سببه \"صدقاً وحقاً\" تعني:",o:["الوجود المادي للواقعة","صحة التكييف القانوني للواقعة","مشروعية الغاية","ملاءمة القرار"],a:1,e:"\"صدقاً\" تعني وجود الواقعة فعلاً، و\"حقاً\" تعني صحة إرجاعها إلى النص."},
+{q:"قرار تأديبي بُني على عدة أسباب، ثبت بعضها وكان كافياً لتبريره:",o:["يُلغى","يبقى صحيحاً","يُعدّ منعدماً","يُلغى جزئياً"],a:1,e:"يكفي لصحة القرار سبب واحد صحيح كافٍ لتبريره."},
+{q:"قرار ترقية موظف متوفى معيب في:",o:["السبب","المحل، لاستحالته واقعاً","الشكل","الاختصاص الزماني"],a:1,e:"يُشترط في المحل أن يكون جائزاً قانوناً وممكناً واقعاً."},
+{q:"اعتبار الجهة استئجار العقارات وتأجيرها من الأعمال التجارية مثال على:",o:["الخطأ في تأويل النظام","المخالفة السلبية","عيب الشكل","الانحراف بالسلطة"],a:0,e:"نظام المحكمة التجارية حصر الأعمال التجارية، ولم يذكر استئجار العقارات بينها."},
+{q:"النقل التأديبي للموظف:",o:["جائز إذا كان مسبباً","مخالف لقاعدة تخصيص الأهداف","معيب في الشكل فقط","معيب بعدم الاختصاص"],a:1,e:"هدف النقل حسن توزيع الموظفين، والعقوبات التأديبية محصورة في خمس ليس منها النقل."},
+{q:"من خصائص عيب الانحراف بالسلطة أنه:",o:["عيب احتياطي يبحثه القاضي بعد غيره","من النظام العام","سهل الإثبات","يشترط سوء نية مُصدر القرار"],a:0,e:"وهو أيضاً قصدي غالباً، ومرتبط بالسلطة التقديرية، وصعب الإثبات، ولا يُشترط فيه سوء النية."},
+{q:"لجوء الإدارة إلى الاستيلاء المؤقت لسهولة إجراءاته، وهي تريد وضع يد دائماً على العقار:",o:["انحراف في الإجراءات","عيب في الشكل","عيب في السبب","عدم اختصاص"],a:0,e:"كان عليها اتباع إجراءات نزع الملكية، فهذه مخالفة لقاعدة تخصيص الإجراءات."},
+{q:"الراجح فقهاً وقضاءً في المملكة أن اللائحة تنفذ:",o:["من تاريخ نشرها","من تاريخ التوقيع عليها","من تاريخ العلم اليقيني بها","بعد 30 يوماً من صدورها"],a:1,e:"النشر لا علاقة له بالنفاذ، وإنما يبدأ منه ميعاد الطعن."},
+{q:"عدم إصدار اللائحة التنفيذية خلال المدة التي حددها النظام:",o:["قرار ضمني بالقبول","قرار سلبي","لا أثر له","قرار منعدم"],a:1,e:"فإن لم يحدد النظام مدة لإصدارها، لا يُعدّ التأخير قراراً سلبياً (مثال نظام المحاماة)."},
+{q:"القرار المعلق على شرط واقف، عند تحقق الشرط:",o:["يزول بأثر رجعي","يصبح نافذاً من وقت صدوره","ينشأ من جديد","يصبح منعدماً"],a:1,e:"الشرط الواقف يمنع السريان فقط، أما الشرط الفاسخ فيزيل القرار بأثر رجعي."},
+{q:"عدم توافر الاعتماد المالي لقرار الترقية:",o:["يُبطل القرار","يؤجل تنفيذه دون أن يمس صحته أو نفاذه","يوقف نفاذه","يجعله منعدماً"],a:1,e:"عند توفر الاعتماد يتم الصرف بأثر رجعي."},
+{q:"من شروط قبول طلب وقف تنفيذ القرار الإداري:",o:["أن يكون القرار تنظيمياً","الاستعجال","مضي 60 يوماً على صدور القرار","موافقة الجهة الإدارية"],a:1,e:"الشروط: الاقتران بدعوى الإلغاء، والجدية، والاستعجال."},
+{q:"طلب وقف تنفيذ قرار فصل موظف:",o:["يُقبل غالباً","لا يُقبل غالباً، لأن آثاره يمكن تداركها بالتعويض","لا يُقبل إلا بموافقة الوزير","يُقبل دون شروط"],a:1,e:"بخلاف قرار هدم منزل أو ترحيل وافد، فآثارهما يتعذر تداركها."},
+{q:"سحب القرار الإداري يعني:",o:["إنهاء آثاره للمستقبل فقط","إعدامه بأثر رجعي من تاريخ صدوره","تعديله جزئياً","وقف تنفيذه مؤقتاً"],a:1,e:"أما الإلغاء الإداري فينهي الآثار للمستقبل، مع بقاء الآثار الماضية."},
+{q:"ميعاد سحب القرار الفردي المعيب:",o:["60 يوماً من تاريخ صدوره","60 يوماً من تاريخ العلم به","في أي وقت","30 يوماً من صدوره"],a:0,e:"ميعاد السحب هو ميعاد الطعن، وبعده يتحصن القرار إلا في الحالات المستثناة."},
+{q:"يجوز للإدارة سحب القرار الفردي في أي وقت إذا:",o:["صدر نتيجة غش أو تدليس ممن صدر لمصلحته","كان سليماً ورتّب حقاً مكتسباً","مضى عليه 60 يوماً","كان صادراً بالتعيين"],a:0,e:"لأن \"الغش يفسد كل شيء\"."},
+{q:"سلطة الوصاية الإدارية على الهيئات اللامركزية تملك:",o:["سحب قراراتها","المصادقة على قراراتها أو رفض المصادقة فقط","إلغاء قراراتها","تعديل قراراتها"],a:1,e:"رقابة الإشراف لا تشمل حق السحب."},
+{q:"لحماية القرارات الصادرة عن موظف سُحب قرار تعيينه، يُعتمد على:",o:["نظرية الموظف الفعلي","نظرية الظروف الطارئة","نظرية فعل الأمير","مبدأ عدم الرجعية"],a:0,e:"تُعتبر قراراته صحيحة، تغليباً لاستقرار الأوضاع القانونية."},
+{q:"قرار هيئة التدقيق مجتمعة عام 1429هـ قرر أن:",o:["الأصل تحصن القرارات المعيبة في مواجهة الإدارة","للإدارة سحب قراراتها المعيبة في أي وقت","القرارات المنعدمة تتحصن","اللوائح لا تُسحب"],a:0,e:"غلّب القرار مبدأ استقرار المراكز، مع استثناءات للقرارات المعيبة غير الجديرة بالحماية."},
+{q:"من القرارات التي لا تولّد حقوقاً ويجوز إلغاؤها في أي وقت:",o:["قرار ندب موظف أو تكليفه","قرار التعيين","قرار الترقية","قرار منح أرض"],a:0,e:"القرارات الوقتية والولائية والسلبية لا ترتب حقوقاً مكتسبة."},
+{q:"يجوز للإدارة اللجوء إلى التنفيذ المباشر لقراراتها في:",o:["كل الحالات","حالة الضرورة والاستعجال","حالة رضا الأفراد فقط","حالة صدور حكم قضائي فقط"],a:1,e:"حالاته ثلاث: نص يبيحه، ورفض تنفيذ نظام لا جزاء على مخالفته، والضرورة. ويخضع دائماً لرقابة القضاء."}
+];
+
+const ESSAY=[
+{q:"عرّف القرار الإداري في القضاء السعودي، ثم بيّن أوجه النقد الموجهة لهذا التعريف مع الرد عليها.",pts:[
+"غياب التعريف النظامي، إلا إشارة نظام الديوان إلى القرار السلبي",
+"تعريف الديوان: إفصاح الإدارة عن إرادتها الملزمة بمقتضى الأنظمة، بقصد إحداث أثر قانوني جائز وممكن",
+"إضافة المحكمة الإدارية العليا: الإرادة المنفردة، وتحقيق المصلحة العامة",
+"النقد الأول: \"الإفصاح\" يُخرج القرار السلبي. والرد: السكوت في معرض الحاجة بيان",
+"النقد الثاني: يبرز الشروط بدل العناصر. والرد: هذا من باب زيادة الإيضاح",
+"النقد الثالث (جمعيات النفع العام) والنقد الرابع (الإبقاء على المركز)",
+"العناصر الثلاثة المتفق عليها: إدارة عامة، وإرادة منفردة، وأثر قانوني"]},
+{q:"ميّز بين القرار الإداري والعمل القضائي، مبيناً الآثار المترتبة على هذا التمييز.",pts:[
+"نوعا القضاء في المملكة: العادي والإداري (ديوان المظالم)",
+"تعريف الحكم القضائي وحيازته حجية الأمر المقضي",
+"قرارات المحاكم نوعان: قضائية (تعيين خبير)، وإدارية (شؤون الموظفين)",
+"الطعن: تظلم ثم محكمة إدارية، مقابل الاستئناف والنقض والالتماس",
+"الآجال: 60 يوماً من العلم، مقابل 30 يوماً من التسلم",
+"المسؤولية: تثور عن القرار، والأصل عدمها عن العمل القضائي",
+"السحب والتعديل: جائز للإدارة في المدة، ولا يجوز للقضاء إلا بطلب الخصم"]},
+{q:"قارن بين القرار الإداري الضمني والقرار الإداري السلبي.",pts:[
+"تعريف الضمني، ومثالا الرفض (الضمان الاجتماعي) والقبول (الجمعيات الأهلية) خلال 60 يوماً",
+"تعريف السلبي، ومثاله: رفض نقل موظف استوفى الشروط",
+"شرط ثبوت طلب صاحب الشأن، وأن الامتناع في السلطة التقديرية ليس قراراً سلبياً",
+"وجه الشبه: كلاهما ناتج عن سكوت الإدارة (قرار مفترض)",
+"الفروق: مدة السكوت (محددة أو غير محددة)، والأثر، ونوع السلطة",
+"الفروق: التقيد بمدة الطعن، وإمكانية الانعدام"]},
+{q:"وضّح الفرق بين التفويض والإنابة في الاختصاص.",pts:[
+"تعريف التفويض: كتابةً، وبنص، في بعض الاختصاصات",
+"تعريف الإنابة: من رئيس الأصيل عند غيابه، وتكون بصيغة تكليف",
+"المصدر والنص: الإنابة تجوز دون نص، استناداً لاستمرارية المرافق والسلطة الرئاسية",
+"النطاق والحضور: التفويض في جزء وفي حضور المفوِّض، والإنابة في بعض أو كل وعند الغياب",
+"المسؤولية ومرتبة القرارات: التفويض لا يعفي المفوِّض، والإنابة تعفي الأصيل وقرارات النائب بمرتبته",
+"الانتهاء: أسباب التفويض الخمسة، مقابل عودة الأصيل أو تعيين بديل"]},
+{q:"عدّد الاستثناءات الواردة على مبدأ تحصن القرارات الإدارية الفردية المعيبة في مواجهة الإدارة.",pts:[
+"الأصل: السحب خلال 60 يوماً من الصدور، وقرار هيئة التدقيق مجتمعة 1429هـ",
+"القرارات المنعدمة",
+"القرارات الصادرة نتيجة غش أو تدليس",
+"القرارات غير المنشورة أو غير المعلنة، ما لم يتحقق العلم بها",
+"ما يجيز النظام أو يوجب سحبه دون مدة، والقرارات التنفيذية (الكاشفة)",
+"ما يعارض حجية الشيء المقضي به، والتسوية الخاطئة للرواتب",
+"ما أضافه الفقه: القرارات المبنية على سلطة مقيدة، والقرارات المستمرة"]},
+{q:"تكلّم عن طلب وقف تنفيذ القرار الإداري: أساسه وشروطه ومصيره.",pts:[
+"الأصل: رفع دعوى الإلغاء لا يوقف التنفيذ (نظام المرافعات أمام الديوان)",
+"الأساس: قرينة صحة القرار، وأن وقف التنفيذ استثناء وطلب مستعجل",
+"الشرط الأول: الاقتران بدعوى الإلغاء",
+"الشرط الثاني: الجدية، أي أن يكون كسب الدعوى مرجحاً لا مؤكداً",
+"الشرط الثالث: الاستعجال، أي آثار يتعذر تداركها (هدم منزل، ترحيل) بخلاف النقل والفصل",
+"المصير: يتأكد الوقف بالإلغاء، ويسقط الطلب برفض الدعوى"]},
+{q:"تحدث عن عيب الانحراف بالسلطة: مفهومه وخصائصه وصوره وإثباته.",pts:[
+"التعريف ومسميات العيب (إساءة استعمال السلطة، التعسف، الانحراف)",
+"الخصائص: احتياطي، وقصدي غالباً، ومرتبط بالسلطة التقديرية، وصعب الإثبات",
+"مجانبة المصلحة العامة، دون اشتراط سوء النية (مثال التأخير في السفلتة)",
+"مخالفة قاعدة تخصيص الأهداف (النقل التأديبي، والعقوبات المحصورة)",
+"مخالفة قاعدة تخصيص الإجراءات (الاستيلاء المؤقت بدل نزع الملكية)",
+"الإثبات: قرينة بسيطة تقبل العكس، والعلاقة بالسبب"]}
+];
+const CASES=[
+{q:"حالة عملية: أصدر مدير إدارة التعليم قراراً بنقل معلم إلى مدرسة في منطقة نائية بعد شكوى قدّمها ضده ولي أمر، دون حاجة فعلية في المدرسة المنقول إليها. وعلم المعلم بالقرار عبر رسالة نصية على جواله. كيّف القرار، وحدد العيب الذي يشوبه، وبيّن ميعاد التظلم، ومدى إمكانية طلب وقف تنفيذه.",pts:[
+"التكييف: قرار إداري فردي صريح صادر عن جهة إدارية",
+"العيب: الغاية، بمخالفة قاعدة تخصيص الأهداف، لأن هدف النقل حسن توزيع الموظفين",
+"العقوبات التأديبية محصورة في خمس، وليس منها النقل (جزاء مقنّع)",
+"الرسالة النصية وسيلة إبلاغ يتحقق بها العلم اليقيني",
+"التظلم خلال 60 يوماً من العلم، ثم دعوى الإلغاء",
+"وقف التنفيذ لا يُقبل غالباً، لأن آثار النقل يمكن تداركها"]},
+{q:"حالة عملية: أغلقت أمانة إحدى المدن محلاً تجارياً لمخالفته الاشتراطات، مستندةً إلى لائحة ثبت أنها أُلغيت بلائحة أحدث. ولم يعلم صاحب المحل بالقرار إلا بعد أربعة أشهر من صدوره، حين نُفّذ الإغلاق. ثم رغبت الأمانة في سحب القرار. كيّف المسألة.",pts:[
+"العيب: المحل، في صورة المخالفة المباشرة الإيجابية لاستناده إلى لائحة ملغاة",
+"اعتبر القضاء مثل هذا القرار منعدماً لا يتحصن (قضية أمانة جدة)",
+"المنعدم يُطعن فيه دون التقيد بمواعيد دعوى الإلغاء",
+"ميعاد الطعن أصلاً يبدأ من العلم لا من الصدور، فلم يفت حتى لو كان القرار معيباً فقط",
+"يجوز للأمانة سحبه في أي وقت (استثناء المنعدم وغير المعلن)",
+"أثر السحب: إعدام القرار بأثر رجعي، وانتهاء الخصومة إن كانت الدعوى مرفوعة"]}
+];
+
+/* ===== الحالة ===== */
+const KEY="adm-decisions-exam-v1";
+const MCQ_COUNT=30, ESSAY_MARK=5;
+let S=null, timerId=null;
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function load(){try{const v=localStorage.getItem(KEY);return v?JSON.parse(v):null}catch(e){return null}}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function el(tag,attrs,...kids){const n=document.createElement(tag);for(const k in (attrs||{})){if(k==="class")n.className=attrs[k];else if(k.startsWith("on"))n.addEventListener(k.slice(2),attrs[k]);else if(attrs[k]!==false&&attrs[k]!=null)n.setAttribute(k,attrs[k]===true?"":attrs[k])}for(const c of kids.flat()){if(c==null||c===false)continue;n.append(c.nodeType?c:document.createTextNode(c))}return n}
+const ar=n=>String(n).replace(/\d/g,d=>"٠١٢٣٤٥٦٧٨٩"[d]);
+const fmt=n=>ar((Math.round(n*2)/2).toString());
+
+function newExam(minutes,mode){
+  const fromT=MCQ.map((q,i)=>i).filter(i=>MCQ[i].src==="t");
+  const rest=shuffle(MCQ.map((q,i)=>i).filter(i=>MCQ[i].src!=="t")).slice(0,MCQ_COUNT-fromT.length);
+  const ids=shuffle(fromT.concat(rest));
+  const essays=shuffle([0,1,2,3,4,5,6]).slice(0,4).map(i=>({k:"E",i})).concat(CASES.map((c,i)=>({k:"C",i})));
+  S={stage:"exam",mode,minutes,endAt:minutes?Date.now()+minutes*60000:null,tab:"mcq",
+     mcq:ids.map(i=>({i,order:shuffle([0,1,2,3]),ans:null})),
+     essays:essays.map(e=>({...e,text:"",checks:[]})),confirm:false};
+  save();render();
+}
+const essayData=e=>e.k==="E"?ESSAY[e.i]:CASES[e.i];
+
+/* ===== العرض ===== */
+const app=document.getElementById("app");
+function render(){
+  app.replaceChildren();
+  clearInterval(timerId);
+  const clock=document.getElementById("clock"), prog=document.getElementById("prog");
+  clock.hidden=true; prog.textContent="";
+  if(!S||S.stage==="start") return renderStart();
+  if(S.stage==="exam"){renderExam(); startClock();}
+  if(S.stage==="result") renderResult();
+}
+
+function renderStart(){
+  let minutes=90, mode="exam";
+  const mBtns=[45,90,120,0].map(m=>el("button",{class:"chip",type:"button","aria-pressed":String(m===minutes),onclick:e=>{minutes=m;[...e.target.parentNode.querySelectorAll(".chip")].forEach(b=>b.setAttribute("aria-pressed",String(b===e.target)))}},m?ar(m)+" دقيقة":"بلا وقت"));
+  const modeBtns=[["exam","اختبار (التصحيح في النهاية)"],["train","تدريب (تصحيح فوري)"]].map(([v,t])=>el("button",{class:"chip",type:"button","aria-pressed":String(v===mode),onclick:e=>{mode=v;[...e.target.parentNode.querySelectorAll(".chip")].forEach(b=>b.setAttribute("aria-pressed",String(b===e.target)))}},t));
+  const prev=load();
+  app.append(
+    el("section",{class:"sheet"},
+      el("span",{class:"lbl"},"مقرر القرارات والعقود الإدارية · القسم الأول"),
+      el("h1",{},"اختبار محاكٍ في القرارات الإدارية"),
+      el("p",{class:"lead"},"قسمان كالاختبار الفعلي: اختيار من متعدد يُصحَّح آلياً، وأسئلة مقالية تكتب إجابتها ثم تقيّمها بقائمة عناصر الإجابة النموذجية. في كل محاولة تُسحب أسئلة جديدة من البنك."),
+      el("div",{class:"meta"},
+        el("div",{},el("b",{},ar(MCQ_COUNT)),el("span",{},"سؤال اختيار · درجة لكل سؤال")),
+        el("div",{},el("b",{},ar(6)),el("span",{},"أسئلة مقالية · "+ar(ESSAY_MARK)+" درجات لكل سؤال")),
+        el("div",{},el("b",{},ar(MCQ_COUNT+6*ESSAY_MARK)),el("span",{},"المجموع الكلي")),
+        el("div",{},el("b",{},ar(MCQ.length+ESSAY.length+CASES.length)),el("span",{},"سؤالاً في البنك"))
+      ),
+      el("div",{class:"opts"},el("span",{class:"lbl"},"المدة:"),...mBtns),
+      el("div",{class:"opts"},el("span",{class:"lbl"},"الوضع:"),...modeBtns),
+      el("div",{class:"row"},
+        el("button",{class:"btn",type:"button",onclick:()=>newExam(minutes,mode)},"ابدأ الاختبار"),
+        prev&&prev.stage==="exam"?el("button",{class:"btn ghost",type:"button",onclick:()=>{S=prev;render()}},"أكمل المحاولة السابقة"):null,
+        prev&&prev.stage==="result"?el("button",{class:"btn ghost",type:"button",onclick:()=>{S=prev;render()}},"اعرض نتيجتك السابقة"):null
+      ),
+      el("p",{class:"note"},"الأسئلة الموسومة «من التجميعات» مأخوذة من تجميعات سابقة، أو معدّلة لتتوافق مع حدود الملخص. وبقية الأسئلة جديدة من محتوى الملخص.")
+    )
+  );
+}
+
+function tagFor(q){return q.src==="t"?el("span",{class:"tag"},"من التجميعات"):el("span",{class:"tag new"},"جديد")}
+
+function renderExam(){
+  const answered=S.mcq.filter(m=>m.ans!=null).length, written=S.essays.filter(e=>e.text.trim()).length;
+  document.getElementById("prog").textContent=`اختيار ${ar(answered)}/${ar(S.mcq.length)} · مقالي ${ar(written)}/${ar(S.essays.length)}`;
+  const tabs=el("div",{class:"tabs",role:"tablist"},
+    el("button",{class:"tab",role:"tab","aria-selected":String(S.tab==="mcq"),onclick:()=>{S.tab="mcq";save();render();scrollTo(0,0)}},"القسم الأول: اختيار من متعدد"),
+    el("button",{class:"tab",role:"tab","aria-selected":String(S.tab==="essay"),onclick:()=>{S.tab="essay";save();render();scrollTo(0,0)}},"القسم الثاني: مقالي"));
+  const sheet=el("section",{class:"sheet"});
+  if(S.tab==="mcq"){
+    sheet.append(el("h2",{},"اختر الإجابة الصحيحة"));
+    S.mcq.forEach((m,n)=>sheet.append(mcqBlock(m,n,S.mode==="train"&&m.ans!=null)));
+    sheet.append(el("div",{class:"row"},el("button",{class:"btn ghost",type:"button",onclick:()=>{S.tab="essay";save();render();scrollTo(0,0)}},"انتقل إلى القسم المقالي")));
+  }else{
+    sheet.append(el("h2",{},"أجب عن الأسئلة التالية"),el("p",{class:"note"},"اكتب إجابتك بالنقاط كما في ورقة الاختبار. تُحفظ تلقائياً على هذا الجهاز."));
+    S.essays.forEach((e,n)=>{
+      const d=essayData(e);
+      const ta=el("textarea",{id:"ess-"+n,"aria-label":"إجابة السؤال "+(n+1),placeholder:"اكتب إجابتك هنا…"});
+      ta.value=e.text;
+      ta.addEventListener("input",()=>{e.text=ta.value;save();const a=S.mcq.filter(m=>m.ans!=null).length,w=S.essays.filter(x=>x.text.trim()).length;document.getElementById("prog").textContent=`اختيار ${ar(a)}/${ar(S.mcq.length)} · مقالي ${ar(w)}/${ar(S.essays.length)}`});
+      sheet.append(el("div",{class:"q"},
+        el("div",{class:"qh"},el("span",{class:"qn"},"س"+ar(n+1)),el("span",{class:"qt"},d.q),el("span",{class:"marks"},"("+ar(ESSAY_MARK)+" درجات)")),
+        ta));
+    });
+  }
+  const submit=el("div",{class:"row"},el("button",{class:"btn",type:"button",onclick:()=>{S.confirm=true;save();render();setTimeout(()=>document.getElementById("cf")?.scrollIntoView({block:"center"}),0)}},"تسليم الاختبار"));
+  const confirmBox=S.confirm?el("div",{class:"confirm",id:"cf"},
+    el("strong",{},"تسليم الاختبار الآن؟"),
+    el("span",{},`أجبت عن ${ar(answered)} من ${ar(S.mcq.length)} سؤال اختيار، وكتبت ${ar(written)} من ${ar(S.essays.length)} إجابات مقالية. لا يمكن تعديل الإجابات بعد التسليم.`),
+    el("div",{class:"row"},el("button",{class:"btn",type:"button",onclick:finish},"نعم، سلّم"),el("button",{class:"btn ghost",type:"button",onclick:()=>{S.confirm=false;save();render()}},"تراجع"))):null;
+  app.append(tabs,sheet,confirmBox||submit,
+    el("div",{class:"row"},el("button",{class:"btn ghost",type:"button",onclick:()=>{S={stage:"start"};save();render()}},"إلغاء المحاولة والعودة")));
+}
+
+function mcqBlock(m,n,reveal,review){
+  const q=MCQ[m.i];
+  const box=el("div",{class:"q"+(reveal||review?" locked":"")});
+  box.append(el("div",{class:"qh"},el("span",{class:"qn"},ar(n+1)+"."),el("span",{class:"qt"},q.q),tagFor(q)));
+  const list=el("div",{class:"choices",role:"radiogroup"});
+  m.order.forEach(oi=>{
+    let cls="choice";
+    if(reveal||review){ if(oi===q.a)cls+=" right"; else if(oi===m.ans)cls+=" wrong"; }
+    else if(oi===m.ans) cls+=" sel";
+    const inp=el("input",{type:"radio",name:"m"+n,id:`m${n}-${oi}`,checked:oi===m.ans,disabled:!!(reveal||review)});
+    inp.addEventListener("change",()=>{m.ans=oi;save();render()});
+    list.append(el("label",{class:cls,for:`m${n}-${oi}`},inp,el("span",{},q.o[oi])));
+  });
+  box.append(list);
+  if(reveal||review){
+    const ok=m.ans===q.a;
+    box.append(el("p",{class:"exp"},el("b",{},m.ans==null?"لم تُجب. ":ok?"إجابة صحيحة. ":"إجابة خاطئة. "),q.e));
+  }
+  return box;
+}
+
+function startClock(){
+  const clock=document.getElementById("clock");
+  if(!S.endAt){clock.hidden=true;return}
+  clock.hidden=false;
+  const tick=()=>{const left=Math.max(0,S.endAt-Date.now());const m=Math.floor(left/60000),s=Math.floor(left%60000/1000);
+    clock.textContent=ar(m)+":"+ar(String(s).padStart(2,"0"));clock.classList.toggle("low",left<5*60000);
+    if(left<=0){clearInterval(timerId);finish()}};
+  tick(); timerId=setInterval(tick,1000);
+}
+
+function finish(){S.stage="result";S.confirm=false;S.essays.forEach(e=>{e.checks=e.checks.length?e.checks:essayData(e).pts.map(()=>false)});save();render();scrollTo(0,0)}
+
+function renderResult(){
+  const mcqScore=S.mcq.filter(m=>m.ans===MCQ[m.i].a).length;
+  const essScores=S.essays.map(e=>{const d=essayData(e);return ESSAY_MARK*e.checks.filter(Boolean).length/d.pts.length});
+  const essScore=essScores.reduce((a,b)=>a+b,0);
+  const total=mcqScore+essScore, max=S.mcq.length+S.essays.length*ESSAY_MARK;
+  const pct=total/max*100;
+  const verdict=pct>=90?"ممتاز":pct>=80?"جيد جداً":pct>=70?"جيد":pct>=60?"مقبول":"يحتاج مراجعة";
+  const wrongT=S.mcq.filter(m=>m.ans!==MCQ[m.i].a).length;
+  app.append(
+    el("section",{class:"sheet"},
+      el("span",{class:"lbl"},"النتيجة"),
+      el("h1",{},verdict),
+      el("div",{class:"score"},
+        el("div",{},el("b",{},fmt(mcqScore)+" / "+ar(S.mcq.length)),el("span",{},"الاختيار من متعدد (تصحيح آلي)")),
+        el("div",{},el("b",{id:"essSc"},fmt(essScore)+" / "+ar(S.essays.length*ESSAY_MARK)),el("span",{},"المقالي (تقييمك الذاتي)")),
+        el("div",{class:"total"},el("b",{id:"totSc"},fmt(total)+" / "+ar(max)),el("span",{},"المجموع"))
+      ),
+      el("p",{class:"note"},`أخطأت أو تركت ${ar(wrongT)} سؤال اختيار. الدرجة المقالية تتحدث كلما أشّرت على عنصر غطته إجابتك.`),
+      el("div",{class:"row"},
+        el("button",{class:"btn",type:"button",onclick:()=>{S={stage:"start"};save();render()}},"اختبار جديد"),
+        el("button",{class:"btn ghost",type:"button",onclick:()=>document.getElementById("essRev").scrollIntoView()},"قيّم إجاباتك المقالية"))
+    ),
+    (()=>{const s=el("section",{class:"sheet",id:"essRev"},el("h2",{},"القسم الثاني: قيّم إجاباتك"),el("p",{class:"note"},"قارن إجابتك بعناصر الإجابة النموذجية، وأشّر على كل عنصر ذكرته. الدرجة مقسّمة بالتساوي على العناصر."));
+      S.essays.forEach((e,n)=>{const d=essayData(e);
+        const out=el("span",{class:"marks"},"("+fmt(essScores[n])+" / "+ar(ESSAY_MARK)+")");
+        const rub=el("div",{class:"rub"},el("span",{class:"lbl"},"عناصر الإجابة النموذجية"),
+          ...d.pts.map((p,pi)=>{const cb=el("input",{type:"checkbox",id:`r${n}-${pi}`,checked:!!e.checks[pi]});
+            cb.addEventListener("change",()=>{e.checks[pi]=cb.checked;save();
+              const sc=S.essays.map(x=>ESSAY_MARK*x.checks.filter(Boolean).length/essayData(x).pts.length);
+              const es=sc.reduce((a,b)=>a+b,0);
+              out.textContent="("+fmt(sc[n])+" / "+ar(ESSAY_MARK)+")";
+              document.getElementById("essSc").textContent=fmt(es)+" / "+ar(S.essays.length*ESSAY_MARK);
+              document.getElementById("totSc").textContent=fmt(mcqScore+es)+" / "+ar(max);});
+            return el("label",{for:`r${n}-${pi}`},cb,el("span",{},p))}));
+        s.append(el("div",{class:"q"},
+          el("div",{class:"qh"},el("span",{class:"qn"},"س"+ar(n+1)),el("span",{class:"qt"},d.q),out),
+          el("span",{class:"lbl"},"إجابتك"),
+          el("p",{class:"yours"},e.text.trim()||"لم تكتب إجابة."),
+          rub));});
+      return s})(),
+    (()=>{const s=el("section",{class:"sheet"},el("h2",{},"القسم الأول: مراجعة الإجابات"));
+      S.mcq.forEach((m,n)=>s.append(mcqBlock(m,n,false,true)));return s})()
+  );
+}
+
+S=load();
+if(S&&S.stage==="exam"&&S.endAt&&S.endAt<Date.now()){S.stage="result";S.essays.forEach(e=>{if(!e.checks.length)e.checks=essayData(e).pts.map(()=>false)})}
+if(S&&S.stage!=="start"){const keep=S;S={stage:"start"};render();S=keep;} else {S={stage:"start"};render();}
+</script>
+</body>
+</html>
